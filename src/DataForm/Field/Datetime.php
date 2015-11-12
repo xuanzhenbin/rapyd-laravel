@@ -8,8 +8,8 @@ use Zofe\Rapyd\Rapyd;
 class Datetime extends Field
 {
     public $type = "datetime";
-    public $format = 'Y-m-d H:i';
-    public $language = 'zh-CN';
+    public $format = 'm/d/Y H:i';
+    public $language = 'en';
 
     /**
      * set instarnal preview datetime format
@@ -31,7 +31,13 @@ class Datetime extends Field
     {
         $datetime = \dateTime::createFromFormat( 'Y-m-d H:i', $isodatetime);
         if (!$datetime) return '';
-        return $datetime->format($this->format);
+        $timestamp = $datetime->getTimestamp();
+        if ($timestamp < 1) {
+            return "";
+        }
+        $isodate = date($this->format, $timestamp);
+
+        return $isodatetime;
     }
 
     /**
@@ -41,7 +47,13 @@ class Datetime extends Field
     {
         $datetime = \dateTime::createFromFormat( $this->format, $humandatetime);
         if (!$datetime) return '';
-        return $datetime->format('Y-m-d H:i');
+        $timestamp = $datetime->getTimestamp();
+        if ($timestamp < 1) {
+            return "";
+        }
+        $humandatetime = date('Y-m-d H:i', $timestamp);
+
+        return $humandatetime;
     }
 
     /**
@@ -63,8 +75,8 @@ class Datetime extends Field
     {
         $format = $this->format;
         $format = str_replace(array('d',  'm',  'Y', 'H', 'i', 's', 'a', 'A', 'g', 'G'),
-            array('dd', 'mm', 'yyyy', 'hh', 'ii', 'ss', 'p', 'P', 'H', 'h'),
-            $format
+                              array('dd', 'mm', 'yyyy', 'hh', 'ii', 'ss', 'p', 'P', 'H', 'h'),
+                             $format
         );
 
         return $format;
