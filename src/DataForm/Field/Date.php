@@ -32,15 +32,13 @@ class Date extends Field
     protected function isoDateToHuman($isodate)
     {
         $isodate = str_replace(" 00:00:00", "", $isodate);
+        if ($this->format == 'Y-m-d') {
+            return $isodate;
+        }
+
         $datetime = \DateTime::createFromFormat( 'Y-m-d', $isodate);
         if (!$datetime) return '';
-        $timestamp = $datetime->getTimestamp();
-        if ($timestamp < 1) {
-            return "";
-        }
-        $isodate = date($this->format, $timestamp);
-
-        return $isodate;
+        return $datetime->format($this->format);
     }
 
     /**
@@ -48,15 +46,12 @@ class Date extends Field
      */
     protected function humanDateToIso($humandate)
     {
+        if ($this->format == 'Y-m-d') {
+            return $humandate;
+        }
         $datetime = \DateTime::createFromFormat( $this->format, $humandate);
         if (!$datetime) return null;
-        $timestamp = $datetime->getTimestamp();
-        if ($timestamp < 1) {
-            return null;
-        }
-        $humandate = date('Y-m-d', $timestamp);
-
-        return $humandate;
+        return $datetime->format('Y-m-d');
     }
 
     /**
