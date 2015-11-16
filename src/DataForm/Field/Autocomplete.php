@@ -203,7 +203,7 @@ class Autocomplete extends Field
                     }).on("typeahead:selected typeahead:autocompleted",
                         function (e,data) {
                             $('#{$this->name}').val(data.{$this->record_id});
-                    }).on("typeahead:closed,typeahead:change",
+                    }).on("typeahead:closed",
                         function (e,data) {
                             if ('{$this->must_match}') {
                                 var _label = $.trim($(this).val());
@@ -217,12 +217,14 @@ class Autocomplete extends Field
                                 }
                             }
                     });
-                    $('#th_{$this->name} .typeahead').keypress(function (e) {
-                        if (e.which == 13) {
-                            e.preventDefault();
+
+                    //  if auto_field is null: select all text in auto_field can't cause the request that field is not null.
+                    $('#auto_{$this->name}').parents('form').submit(function(){
+                        var _label = $.trim($('#auto_{$this->name}').val());
+                        if ( _label == '' ) {
+                            $('#{$this->name}').val('');
                         }
-                    });
-                    
+                     });
                     
 acp;
 
@@ -264,13 +266,7 @@ acp;
                             }
                     });
 
-                    //  if auto_field is null: select all text in auto_field can't cause the request that field is not null.
-                    $('#auto_{$this->name}').parents('form').submit(function(){
-                        var _label = $.trim($('#auto_{$this->name}').val());
-                        if ( _label == '' ) {
-                            $('#{$this->name}').val('');
-                        }
-                     });
+                    
 
 acp;
 
