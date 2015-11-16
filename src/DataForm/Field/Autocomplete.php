@@ -265,9 +265,6 @@ acp;
                                 $('#{$this->name}').val('');
                             }
                     });
-
-                    
-
 acp;
 
                     Rapyd::script($script);
