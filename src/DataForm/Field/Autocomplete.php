@@ -146,8 +146,12 @@ class Autocomplete extends Field
                 if (Input::get("auto_".$this->name)) {
                     $autocomplete = Input::get("auto_".$this->name);
                 } elseif ($this->relation != null) {
-                    $name = $this->rel_field;
-                    $autocomplete = @$this->relation->get()->first()->$name;
+                    //  create and update page shows new data
+                    $autocomplete = '';
+                    list($table, $name) = explode('_', $this->name);
+                    if ( !is_null($this->model->$table)){
+                        $autocomplete = $this->model->$table->$name;
+                    }
                 } elseif (count($this->local_options)) {
 
                     $autocomplete = $this->description;
@@ -171,10 +175,14 @@ class Autocomplete extends Field
                                 complete: function(response){
                                     response.responseJSON.forEach(function (item) {
                                         blod_{$this->name}.valueCache[item.{$this->record_label}] = item.{$this->record_id};
-                                        if ( item.{$this->record_label} == $('#auto_{$this->name}').val() ) {
-                                            $('#{$this->name}').val(item.{$this->record_id});
-                                        }
                                     });
+                                    //  if close typeahead before request done
+                                    var _label = $.trim($('#auto_{$this->name}').val());
+                                    if ( _label in blod_{$this->name}.valueCache ) {
+                                        $('#{$this->name}').val(blod_{$this->name}.valueCache[_label]);
+                                    }else{
+                                        $('#{$this->name}').val('');
+                                    }
                                 }
                             }
                         }
@@ -195,7 +203,7 @@ class Autocomplete extends Field
                     }).on("typeahead:selected typeahead:autocompleted",
                         function (e,data) {
                             $('#{$this->name}').val(data.{$this->record_id});
-                    }).on("typeahead:closed",
+                    }).on("typeahead:closed,typeahead:change",
                         function (e,data) {
                             if ('{$this->must_match}') {
                                 var _label = $.trim($(this).val());
@@ -209,6 +217,13 @@ class Autocomplete extends Field
                                 }
                             }
                     });
+                    $('#th_{$this->name} .typeahead').keypress(function (e) {
+                        if (e.which == 13) {
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    
 acp;
 
                     Rapyd::script($script);
@@ -248,6 +263,15 @@ acp;
                                 $('#{$this->name}').val('');
                             }
                     });
+
+                    //  if auto_field is null: select all text in auto_field can't cause the request that field is not null.
+                    $('#auto_{$this->name}').parents('form').submit(function(){
+                        var _label = $.trim($('#auto_{$this->name}').val());
+                        if ( _label == '' ) {
+                            $('#{$this->name}').val('');
+                        }
+                     });
+
 acp;
 
                     Rapyd::script($script);
