@@ -43,10 +43,14 @@ class QNFile extends Field
 
     public function build()
     {
-        $output = "";
+        $output = '<div class="clearfix"></div>';
         Rapyd::js('qn-file/plupload.full.min.js');
         Rapyd::js('qn-file/qiniu.js');
         Rapyd::js('qn-file/upload.js');
+
+        if (!$this->label) {
+            $this->label = ($this->status != 'show') ? ' ' : '';
+        }
 
         if (parent::build() === false) {
             return;
