@@ -130,8 +130,7 @@ class Autocomplete extends Field
                     $output = "";
                 } else {
                     if ($this->relation != null) {
-                        list($table, $name) = explode('_', $this->name);
-                        $value = $this->model->$table->$name;
+                        $value = $this->model->{$this->rel_name}->{$this->rel_field};
                     } else {
                         $value = $this->value;
                     }
@@ -148,9 +147,8 @@ class Autocomplete extends Field
                 } elseif ($this->relation != null) {
                     //  create and update page shows new data
                     $autocomplete = '';
-                    list($table, $name) = explode('_', $this->name);
-                    if ( !is_null($this->model->$table)){
-                        $autocomplete = $this->model->$table->$name;
+                    if ($related = $this->model->{$this->rel_name}) {
+                        $autocomplete = $related->{$this->rel_field};
                     }
                 } elseif (count($this->local_options)) {
 
