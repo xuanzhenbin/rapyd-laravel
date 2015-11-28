@@ -31,28 +31,28 @@ function Uploader($trigger, opts) {
 	// 上层的的div
 	this.group = $trigger.closest('.qn-upload');
 
-	// 各种变量
-	this.isRequired = opts.required;
-
 	this.browseBtnId = PREFIX_UPLOADER_PICKER + opts.name;
 	this.containerId = PREFIX_UPLOADER_BLOCK + opts.name;
 
 	// 创建 or 拿到填充数据的input
 	this.input = this.group.siblings('[name=' + opts.inputName + ']');
+	if (this.input.length == 0) {
+		this.input = this.group.closest('form').find('[name=' + opts.inputName + ']')
+	}
 	this.input.css('display', 'none');
+	//console.log(this.input);
 
 	// 准备fileList里的存放位置
-	if (typeof fileList[opts.inputName] == 'undefined') {
+	if ($.isEmptyObject(fileList[opts.inputName])) {
 		fileList[opts.inputName] = {};
 	}
-	fileList[opts.inputName][opts.name] = [];
 
 	// 方便调用
-	var self = this;
+	var that = this;
 
 	// 写入fileList的函数
 	this.pushFileKey = function (key) {
-		if (typeof fileList[opts.inputName][opts.name] == 'undefined') {
+		if ($.isEmptyObject(fileList[opts.inputName][opts.name])) {
 			fileList[opts.inputName][opts.name] = [];
 		}
 		if (fileList[opts.inputName][opts.name].indexOf(key) == -1) {
@@ -74,8 +74,12 @@ function Uploader($trigger, opts) {
 				$('<div/>', {
 					'class': 'panel-heading',
 					'html': [
-						'<span style="margin-right: 1em;">' + (this.isRequired ? '* ' : '') + opts.name + '</span>',
-						this.isModify() ? '<span id="' + this.browseBtnId + '" class="btn btn-primary btn-sm">添加' + opts.typeTitle + '（可多选）</span>' : ''
+						'<span style="margin-right: 1em;">' + (opts.required ? '* ' : '') + opts.name + '</span>',
+						that.isModify() ? $('<span/>', {
+							'id': that.browseBtnId,
+							'class': 'btn btn-primary btn-sm',
+							'html': '添加' + opts.typeTitle + '（可多选）'
+						}) : ''
 					]
 				}),
 				$('<div/>', {'class': 'panel-body'})
@@ -88,10 +92,11 @@ function Uploader($trigger, opts) {
 		var val = this.getValue();
 		if (!$.isEmptyObject(val) && $.isPlainObject(val)) {
 			fileList[opts.inputName] = val;
-			this.showUploadFiles();
 		}
 
-		if (this.isModify() && this.isRequired) {
+		this.showUploadFiles();
+
+		if (this.isModify() && opts.required) {
 			this.bindRequired();
 		}
 	};
@@ -107,7 +112,6 @@ function Uploader($trigger, opts) {
 	};
 
 	this.imagePreview = function (file) {
-		// hasUpload = (typeof hasUpload !== 'undefined') ? b : false; // 默认参数用来生成未上传图片
 		var $img = $('<img/>', {
 			'id': file.id,
 			'class': 'img-thumbnail',
@@ -140,9 +144,9 @@ function Uploader($trigger, opts) {
 				'class': 'file-block img-thumbnail text-center',
 				'style': 'margin-right: 10px;',
 				'data-key': key,
-				'html': self.isModify() ? '<p><span class="btn btn-xs btn-danger file-delete">删除</span></p>' : ''
+				'html': that.isModify() ? '<span class="btn btn-xs btn-danger btn-block file-delete">删除</span>' : ''
 			});
-			self.previewer.append($div);
+			that.previewer.append($div);
 
 			if (opts.type == 'image') {
 				$div.prepend('<p><a href="' + fileLinks[key].url + '" target="_blank"><img src="' + fileLinks[key].small + '"></a></p>');
@@ -158,7 +162,7 @@ function Uploader($trigger, opts) {
 			'id': 'block-' + file.id,
 			'class': 'file-block img-thumbnail text-center',
 			'style': 'margin-right: 10px;',
-			'html': '<p><span class="btn btn-xs btn-warning file-delete">0%</span></p>'
+			'html': '<span class="btn btn-xs btn-warning btn-block file-delete">0%</span>'
 		});
 
 		if (opts.type == 'image') {
@@ -182,7 +186,7 @@ function Uploader($trigger, opts) {
 
 	// 删除按钮的监听事件
 	this.bindDelete = function () {
-		$('.file-delete').on('click', function () {
+		this.previewer.find('.file-delete').on('click', function () {
 			var $block = $(this).closest('.file-block');
 			var key = $block.data('key');
 			if (key != undefined) {
@@ -192,16 +196,16 @@ function Uploader($trigger, opts) {
 				}
 			}
 			$block.fadeOut('fast');
-			self.fillForm()
+			that.fillForm();
 		});
 	};
 
 	// 初始化七牛的 uploader & 真正的上传过程
 	this.initQiNiuUploader = function () {
 		var qn = new QiniuJsSDK();
-		this.qnUploader = qn.uploader({
-			container: self.containerId,        //上传区域DOM ID，默认是browser_button的父元素，
-			browse_button: self.browseBtnId,       //上传选择的点选按钮，**必需**
+		qn.uploader({
+			container: that.containerId,        //上传区域DOM ID，默认是browser_button的父元素，
+			browse_button: that.browseBtnId,       //上传选择的点选按钮，**必需**
 			multi_selection: true, //note: 支持多选的时候，会导致无法使用摄像头直接拍.
 			runtimes: 'html5,flash,html4',    //上传模式,依次退化
 			filters: {
@@ -223,18 +227,18 @@ function Uploader($trigger, opts) {
 			init: {
 				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
-						self.previewFile(file);
+						that.previewFile(file);
 					});
 				},
 				'UploadProgress': function (up, file) {
-					var $imgDiv = $('#block-' + file.id).find('.btn');
-					if ($imgDiv.length != 0) {
+					var $imgBtn = $('#block-' + file.id).find('.btn');
+					if ($imgBtn.length != 0) {
 						if (file.percent == 100) {
-							$imgDiv.removeClass('btn-warning');
-							$imgDiv.addClass('btn-danger');
-							$imgDiv.text('删除');
+							$imgBtn.removeClass('btn-warning');
+							$imgBtn.addClass('btn-danger');
+							$imgBtn.text('删除');
 						} else {
-							$imgDiv.text(file.percent + '%');
+							$imgBtn.text(file.percent + '%');
 						}
 					}
 				},
@@ -252,8 +256,8 @@ function Uploader($trigger, opts) {
 					$block.data('key', _info.key);
 					var url = (opts.mode == 'private') ? _info.url : 'http://' + opts.domain + '/' + _info.key + '?imageView2/1/w/100/h/100';
 					$block.find('img').prop('src', url);
-					self.pushFileKey(_info.key);
-					self.fillForm();
+					that.pushFileKey(_info.key);
+					that.fillForm();
 				},
 				'Error': function (up, err, errTip) {
 					//上传出错时,处理相关的事情
