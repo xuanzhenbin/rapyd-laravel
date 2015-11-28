@@ -219,7 +219,7 @@ function Uploader($trigger, opts) {
 			save_key: true,   // 默认 false。若在服务端生成uptoken的上传策略中指定了 `sava_key`，则开启，SDK在前端将不对key进行任何处理
 			domain: 'http://',   //bucket 域名，下载资源时用到，**有downtoken_url，这个就不需要了。**
 			max_file_size: '100mb',   //最大文件体积限制
-			chunk_size: '3mb',  //分块上传时，每片的体积 (这个值如果大于4M，会被qiniu js sdk reset)
+			chunk_size: '4mb',  //分块上传时，每片的体积 (这个值如果大于4M，会被qiniu js sdk reset)
 			flash_swf_url: './Moxie.swf',  //引入flash,相对路径
 			max_retries: 3,      //上传失败最大重试次数
 			dragdrop: false,     //开启可拖曳上传
