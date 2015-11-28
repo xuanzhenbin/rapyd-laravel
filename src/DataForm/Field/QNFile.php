@@ -128,7 +128,7 @@ class QNFile extends Field
                 'mode' => $this->fileMode,
                 'domain' => config("services.qiniu.bucket.{$this->fileMode}.domain"),
                 'upUrl' => route('rapyd.qn.up-token') . "/{$this->fileType}/{$this->fileMode}",
-                'downUrl' => config("rapyd.qn-file.{$this->fileType}.down-url")
+                'downUrl' => ($this->fileMode == self::MODE_PRIVATE) ? config("rapyd.qn-file.{$this->fileType}.down-url") : '',
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
             $parts .= <<<HTML
