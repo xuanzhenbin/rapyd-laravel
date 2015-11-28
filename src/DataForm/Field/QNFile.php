@@ -13,19 +13,28 @@ class QNFile extends Field
     const MODE_PUBLIC = 'public';
 
     private $parts = [];
+    private $partInName = null;
     public $type = "text";
     private $saveTo = null;
     private $fileType = self::TYPE_IMAGE;
     private $fileMode = self::MODE_PRIVATE;
 
-    // 为了支持同一个页面多个上传控件，就这样搞了
-    private static $isFirst = [];
+    private static $uploaders = []; // 判断当前的顺序
 
     protected function setName($name)
     {
-        parent::setName($name);
-        if (str_contains($name, ':')) {
-            $this->saveTo = explode(':', $name)[0];
+        $exploded = explode(':', $name);
+        $this->saveTo = $exploded[0];
+        if (empty(self::$uploaders)) {
+            parent::setName($this->saveTo);
+            self::$uploaders []= $name;
+        } else {
+            parent::setName($name);
+        }
+
+        // 支持写法：$edit->addQNFile('images:附加图片', '')->fileType('image')
+        if ($part = array_get($exploded, 1)) {
+            $this->partInName = $part;
         }
     }
 
@@ -50,21 +59,18 @@ class QNFile extends Field
         return $this;
     }
 
+    public function required()
+    {
+        $this->required = true;
+
+        return $this;
+    }
+
     public function saveTo($dbName)
     {
         $this->saveTo = $dbName;
 
         return $this;
-    }
-
-    private function isFirst()
-    {
-        if (isset(self::$isFirst[$this->db_name])) {
-            return false;
-        } else {
-            self::$isFirst[$this->db_name] = true;
-            return true;
-        }
     }
 
     public function build()
@@ -110,10 +116,11 @@ class QNFile extends Field
                 ;
         }
 
-        $saveTo = $this->saveTo ?: $this->db_name;
-
         // 需要上传的项目
         $parts = '';
+        if (empty($this->parts) && $this->partInName) {
+            $this->part($this->partInName, $this->required);
+        }
         foreach ($this->parts as $part => $partAttr) {
 
             // 初始化上传组件
@@ -124,7 +131,7 @@ class QNFile extends Field
                 'ext' => config("rapyd.qn-file.{$this->fileType}.ext"),
                 'required' => array_get($partAttr, 'required'),
                 'status' => $this->status,
-                'inputName' => $saveTo,
+                'inputName' => $this->saveTo,
                 'mode' => $this->fileMode,
                 'domain' => config("services.qiniu.bucket.{$this->fileMode}.domain"),
                 'upUrl' => route('rapyd.qn.up-token') . "/{$this->fileType}/{$this->fileMode}",
@@ -151,7 +158,8 @@ HTML;
 
                 switch ($this->fileType) {
                     case self::TYPE_IMAGE:
-                        $fileLinks[$key]['small'] = $store->size(100, 100)->url($key);
+                        $small = clone $store;
+                        $fileLinks[$key]['small'] = $small->size(100, 100)->url($key);
                         break;
                     case self::TYPE_DOCUMENT:
                         $fileLinks[$key]['title'] = $store->title($key);
@@ -162,7 +170,7 @@ HTML;
         $fileLinks = json_encode($fileLinks, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $output .= <<<HTML
-        <div class="qn-upload hide" data-name="{$saveTo}">
+        <div class="qn-upload hide" data-name="{$this->saveTo}">
             {$parts}
             <span class="qn-upload-links">{$fileLinks}</span>
         </div>

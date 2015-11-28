@@ -39,8 +39,6 @@ function Uploader($trigger, opts) {
 	if (this.input.length == 0) {
 		this.input = this.group.closest('form').find('[name=' + opts.inputName + ']')
 	}
-	this.input.css('display', 'none');
-	//console.log(this.input);
 
 	// 准备fileList里的存放位置
 	if ($.isEmptyObject(fileList[opts.inputName])) {
