@@ -167,6 +167,7 @@ class Autocomplete extends Field
                     var blod_{$this->name} = new Bloodhound({
                         datumTokenizer: Bloodhound.tokenizers.obj.whitespace('auto_{$this->name}'),
                         queryTokenizer: Bloodhound.tokenizers.whitespace,
+                        limit: 10,
                         remote: {
                             url: '{$this->remote}?q=%QUERY',
                             ajax: {
