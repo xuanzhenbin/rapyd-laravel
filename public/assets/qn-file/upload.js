@@ -201,7 +201,7 @@ function Uploader($trigger, opts) {
 	// 初始化七牛的 uploader & 真正的上传过程
 	this.initQiNiuUploader = function () {
 		var qn = new QiniuJsSDK();
-		qn.uploader({
+		that.uploader = qn.uploader({
 			container: that.containerId,        //上传区域DOM ID，默认是browser_button的父元素，
 			browse_button: that.browseBtnId,       //上传选择的点选按钮，**必需**
 			multi_selection: true, //note: 支持多选的时候，会导致无法使用摄像头直接拍.
@@ -219,16 +219,26 @@ function Uploader($trigger, opts) {
 			max_file_size: '100mb',   //最大文件体积限制
 			chunk_size: '4mb',  //分块上传时，每片的体积 (这个值如果大于4M，会被qiniu js sdk reset)
 			flash_swf_url: './Moxie.swf',  //引入flash,相对路径
-			max_retries: 3,      //上传失败最大重试次数
+			max_retries: 1,      //上传失败最大重试次数
 			dragdrop: false,     //开启可拖曳上传
 			auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传,
+			resize: {
+				enabled: true,
+				width: 1000,
+				height: 1000,
+				quality: 90
+			},
 			init: {
-				'FilesAdded': function (up, files) {
+				/**
+				 * @return {boolean}
+				 */
+				FilesAdded: function (up, files) {
 					plupload.each(files, function (file) {
 						that.previewFile(file);
 					});
 				},
-				'UploadProgress': function (up, file) {
+				UploadProgress: function (up, file) {
+					console.log('progress_' + file.id + ' size ' + file.size);
 					var $imgBtn = $('#block-' + file.id).find('.btn');
 					if ($imgBtn.length != 0) {
 						if (file.percent == 100) {
@@ -240,7 +250,7 @@ function Uploader($trigger, opts) {
 						}
 					}
 				},
-				'FileUploaded': function (up, file, info) {
+				FileUploaded: function (up, file, info) {
 					// 每个文件上传成功后,处理相关的事情
 					// 其中 info 是文件上传成功后，服务端返回的json，形式如
 					// {
@@ -257,12 +267,12 @@ function Uploader($trigger, opts) {
 					that.pushFileKey(_info.key);
 					that.fillForm();
 				},
-				'Error': function (up, err, errTip) {
+				Error: function (up, err, errTip) {
 					//上传出错时,处理相关的事情
 					var $block = $('#block-' + err.file.id);
 					$block.prepend('<p style="color: red;"><small>文件上传失败<br>' + errTip + '</small></p>');
 				},
-				'UploadComplete': function () {
+				UploadComplete: function () {
 					//队列文件处理完毕后,处理相关的事情
 				}
 			}

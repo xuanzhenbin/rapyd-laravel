@@ -16,6 +16,7 @@ class QNFile extends Field
     private $partInName = null;
     public $type = "text";
     private $saveTo = null;
+    private $compress = false;
     private $fileType = self::TYPE_IMAGE;
     private $fileMode = self::MODE_PRIVATE;
 
@@ -73,12 +74,26 @@ class QNFile extends Field
         return $this;
     }
 
+    public function compress()
+    {
+        $this->compress = true;
+
+        return $this;
+    }
+
     public function build()
     {
         $output = '<div class="clearfix"></div>';
-        Rapyd::js('qn-file/plupload.full.min.js');
+        Rapyd::js('qn-file/moxie.min.js');
+        Rapyd::js('qn-file/plupload.js');
         Rapyd::js('qn-file/qiniu.js');
         Rapyd::js('qn-file/upload.js');
+
+        if ($this->compress) {
+            Rapyd::js('qn-file/binaryajax.js');
+            Rapyd::js('qn-file/exif.js');
+            Rapyd::js('qn-file/canvasResize.js');
+        }
 
         if (!$this->label) {
             $this->label = ($this->status != 'show') ? ' ' : '';
