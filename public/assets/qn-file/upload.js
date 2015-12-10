@@ -124,7 +124,7 @@ function Uploader($trigger, opts) {
 				preloader.downsize(100, 100);
 				var imgUrl = preloader.getAsDataURL();
 				$img.prop("src", imgUrl);
-				$img.after('<p><small><a href="' + imgUrl + '" target="_blank">' + file.name + '</a></small></p>');
+				$img.after('<br>');
 			};
 			preloader.load(file.getSource());
 		} else {
@@ -147,7 +147,7 @@ function Uploader($trigger, opts) {
 			that.previewer.append($div);
 
 			if (opts.type == 'image') {
-				$div.prepend('<p><a href="' + fileLinks[key].url + '" target="_blank"><img src="' + fileLinks[key].small + '"></a></p>');
+				$div.prepend('<p><a href="' + fileLinks[key].url + '" target="_blank"><img class="img-thumbnail" src="' + fileLinks[key].small + '"></a></p>');
 			} else {
 				$div.prepend('<p><a href="' + fileLinks[key].url + '" target="_blank">' + fileLinks[key].title + '</a></p>');
 			}
@@ -198,10 +198,25 @@ function Uploader($trigger, opts) {
 		});
 	};
 
+	this.removeFile = function (file) {
+		if ($.isEmptyObject(fileList[opts.inputName][opts.name])) {
+			fileList[opts.inputName][opts.name] = [];
+		} else {
+			var idx = fileList[opts.inputName][opts.name].indexOf(file.id);
+			if (idx > -1) {
+				fileList[opts.inputName][opts.name].splice(idx, 1)
+			}
+		}
+
+		$('#block-' + file.id).remove();
+		that.fillForm();
+		this.uploader.removeFile(file);
+	};
+
 	// 初始化七牛的 uploader & 真正的上传过程
 	this.initQiNiuUploader = function () {
 		var qn = new QiniuJsSDK();
-		that.uploader = qn.uploader({
+		this.uploader = qn.uploader({
 			container: that.containerId,        //上传区域DOM ID，默认是browser_button的父元素，
 			browse_button: that.browseBtnId,       //上传选择的点选按钮，**必需**
 			multi_selection: true, //note: 支持多选的时候，会导致无法使用摄像头直接拍.
@@ -219,26 +234,39 @@ function Uploader($trigger, opts) {
 			max_file_size: '100mb',   //最大文件体积限制
 			chunk_size: '4mb',  //分块上传时，每片的体积 (这个值如果大于4M，会被qiniu js sdk reset)
 			flash_swf_url: './Moxie.swf',  //引入flash,相对路径
-			max_retries: 1,      //上传失败最大重试次数
+			max_retries: 3,      //上传失败最大重试次数
 			dragdrop: false,     //开启可拖曳上传
 			auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传,
-			resize: {
-				enabled: true,
-				width: 1000,
-				height: 1000,
-				quality: 90
-			},
 			init: {
-				/**
-				 * @return {boolean}
-				 */
-				FilesAdded: function (up, files) {
+				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
-						that.previewFile(file);
+						/* 检查是否需要压缩 */
+						if (opts.resize && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
+							var _id = 'compressing-' + file.id;
+							that.previewer.append($('<span />', {
+								id: _id,
+								html: '图片压缩中...',
+								'class': 'badge badge-info'
+							}));
+							canvasResize(file.getNative(), {
+								width: 1000,
+								height: 0,
+								crop: false,
+								quality: 99,
+								callback: function (data) {
+									$('#' + _id).fadeOut('fast').remove();
+									var blob = new o.Blob(null, canvasResize('dataURLtoBlob', data));
+									blob.notCompress = true;
+									up.addFile(blob, 'has-compress.' + file.name);
+									that.removeFile(file);
+								}
+							});
+						} else {
+							that.previewFile(file);
+						}
 					});
 				},
-				UploadProgress: function (up, file) {
-					console.log('progress_' + file.id + ' size ' + file.size);
+				'UploadProgress': function (up, file) {
 					var $imgBtn = $('#block-' + file.id).find('.btn');
 					if ($imgBtn.length != 0) {
 						if (file.percent == 100) {
@@ -250,7 +278,7 @@ function Uploader($trigger, opts) {
 						}
 					}
 				},
-				FileUploaded: function (up, file, info) {
+				'FileUploaded': function (up, file, info) {
 					// 每个文件上传成功后,处理相关的事情
 					// 其中 info 是文件上传成功后，服务端返回的json，形式如
 					// {
@@ -267,12 +295,12 @@ function Uploader($trigger, opts) {
 					that.pushFileKey(_info.key);
 					that.fillForm();
 				},
-				Error: function (up, err, errTip) {
+				'Error': function (up, err, errTip) {
 					//上传出错时,处理相关的事情
 					var $block = $('#block-' + err.file.id);
 					$block.prepend('<p style="color: red;"><small>文件上传失败<br>' + errTip + '</small></p>');
 				},
-				UploadComplete: function () {
+				'UploadComplete': function () {
 					//队列文件处理完毕后,处理相关的事情
 				}
 			}
