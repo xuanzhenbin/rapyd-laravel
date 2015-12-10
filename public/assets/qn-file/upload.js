@@ -237,27 +237,27 @@ function Uploader($trigger, opts) {
 			max_retries: 3,      //上传失败最大重试次数
 			dragdrop: false,     //开启可拖曳上传
 			auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传,
+			canSendBinary: true,
 			init: {
 				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
-						/* 检查是否需要压缩 */
-						if (opts.resize && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
+						/* 需要压缩 */
+						if (!$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
 							var _id = 'compressing-' + file.id;
 							that.previewer.append($('<span />', {
 								id: _id,
 								html: '图片压缩中...',
 								'class': 'badge badge-info'
 							}));
+
 							canvasResize(file.getNative(), {
-								width: 1000,
-								height: 0,
-								crop: false,
-								quality: 99,
-								callback: function (data) {
+								width: opts.compress.width,
+								height: opts.compress.height,
+								crop: opts.compress.crop,
+								quality: opts.compress.quality,
+								callback: function (blob) {
 									$('#' + _id).fadeOut('fast').remove();
-									var blob = new o.Blob(null, canvasResize('dataURLtoBlob', data));
-									blob.notCompress = true;
-									up.addFile(blob, 'has-compress.' + file.name);
+									up.addFile(new o.Blob(null, blob), 'has-compress.' + file.name);
 									that.removeFile(file);
 								}
 							});

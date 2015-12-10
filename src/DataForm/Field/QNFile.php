@@ -74,8 +74,13 @@ class QNFile extends Field
         return $this;
     }
 
-    public function compress($quailty = 99, $width = 1000, $height = 0, $crop = false)
+    public function compress($quality = 99, $width = 1000, $height = 1000, $crop = false)
     {
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? trim($_SERVER['HTTP_USER_AGENT']) : '';
+        if (!$ua || str_contains($ua, 'Android')) {
+            return $this;
+        }
+
         $this->compress = compact('width', 'height', 'crop', 'quality');
 
         return $this;
@@ -150,7 +155,7 @@ class QNFile extends Field
                 'domain' => config("services.qiniu.bucket.{$this->fileMode}.domain"),
                 'upUrl' => route('rapyd.qn.up-token') . "/{$this->fileType}/{$this->fileMode}",
                 'downUrl' => ($this->fileMode == self::MODE_PRIVATE) ? config("rapyd.qn-file.{$this->fileType}.down-url") : '',
-                'resize' => $this->compress, // 压缩的配置
+                'compress' => $this->compress, // 压缩的配置
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
             $parts .= <<<HTML
