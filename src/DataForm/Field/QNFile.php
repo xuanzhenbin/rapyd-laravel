@@ -13,6 +13,7 @@ class QNFile extends Field
     const MODE_PUBLIC = 'public';
 
     private $parts = [];
+    private $compress = [];
     private $partInName = null;
     public $type = "text";
     private $saveTo = null;
@@ -27,7 +28,7 @@ class QNFile extends Field
         $this->saveTo = $exploded[0];
         if (empty(self::$uploaders)) {
             parent::setName($this->saveTo);
-            self::$uploaders []= $name;
+            self::$uploaders [] = $name;
         } else {
             parent::setName($name);
         }
@@ -73,12 +74,30 @@ class QNFile extends Field
         return $this;
     }
 
+    public function compress($quality = 99, $width = 1000, $height = 1000, $crop = false)
+    {
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? trim($_SERVER['HTTP_USER_AGENT']) : '';
+        if (!$ua || str_contains($ua, 'Android')) {
+            return $this;
+        }
+
+        $this->compress = compact('width', 'height', 'crop', 'quality');
+
+        return $this;
+    }
+
     public function build()
     {
         $output = '<div class="clearfix"></div>';
         Rapyd::js('qn-file/plupload.full.min.js');
         Rapyd::js('qn-file/qiniu.js');
         Rapyd::js('qn-file/upload.js');
+
+        if ($this->compress) {
+            Rapyd::js('qn-file/binaryajax.js');
+            Rapyd::js('qn-file/exif.js');
+            Rapyd::js('qn-file/canvasResize.js');
+        }
 
         if (!$this->label) {
             $this->label = ($this->status != 'show') ? ' ' : '';
@@ -136,6 +155,7 @@ class QNFile extends Field
                 'domain' => config("services.qiniu.bucket.{$this->fileMode}.domain"),
                 'upUrl' => route('rapyd.qn.up-token') . "/{$this->fileType}/{$this->fileMode}",
                 'downUrl' => ($this->fileMode == self::MODE_PRIVATE) ? config("rapyd.qn-file.{$this->fileType}.down-url") : '',
+                'compress' => $this->compress, // 压缩的配置
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
             $parts .= <<<HTML
