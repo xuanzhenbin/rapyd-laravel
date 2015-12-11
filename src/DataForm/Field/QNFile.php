@@ -91,7 +91,7 @@ class QNFile extends Field
         $output = '<div class="clearfix"></div>';
         Rapyd::js('qn-file/plupload.full.min.js');
         Rapyd::js('qn-file/qiniu.js?v=20151211');
-        Rapyd::js('qn-file/upload.js?v=20151211');
+        Rapyd::js('qn-file/upload.js?v=2015121102');
 
         if ($this->compress) {
             Rapyd::js('qn-file/binaryajax.js');
