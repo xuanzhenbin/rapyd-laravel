@@ -199,7 +199,8 @@ function Uploader($trigger, opts) {
 
 	this.bindRequired = function () {
 		this.group.closest('form').submit(function (event) {
-			if (fileList[opts.inputName][opts.name].length == 0) {
+			if ($.isEmptyObject(fileList[opts.inputName][opts.name])
+				|| fileList[opts.inputName][opts.name].length == 0) {
 				event.preventDefault();
 				alert(opts.name + '不能为空');
 			}
