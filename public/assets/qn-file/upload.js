@@ -262,7 +262,6 @@ function Uploader($trigger, opts) {
 			dragdrop: false,     //开启可拖曳上传
 			auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传,
 			canSendBinary: true,
-			resize: opts.compress,
 			init: {
 				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
