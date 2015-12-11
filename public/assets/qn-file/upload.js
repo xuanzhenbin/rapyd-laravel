@@ -77,14 +77,18 @@ function Uploader($trigger, opts) {
 							'id': that.browseBtnId,
 							'class': 'btn btn-primary btn-sm',
 							'html': '添加' + opts.typeTitle + '（可多选）'
-						}) : ''
+						}) : $('<span />', {
+							'class': 'btn btn-success btn-sm qn-preview',
+							'html': '大图预览'
+						})
 					]
 				}),
 				$('<div/>', {'class': 'panel-body'})
 			]
 		}));
 
-		this.previewer = $('#' + this.containerId).find('.panel-body');
+		var $container = $('#' + this.containerId);
+		this.previewer = $container.find('.panel-body');
 		this.initQiNiuUploader();
 
 		var val = this.getValue();
@@ -96,6 +100,26 @@ function Uploader($trigger, opts) {
 
 		if (this.isModify() && opts.required) {
 			this.bindRequired();
+		}
+
+		if (!that.isModify()) {
+			$container.find('.qn-preview').on('click', function () {
+				var images = '';
+				var files = fileList[opts.inputName][opts.name];
+				$.each($.isEmptyObject(files) ? [] : files, function (idx, key) {
+					images += '<a href="' + fileLinks[key].url
+						+ '"><img src="' + fileLinks[key].url + '" style="width: 100%"></a>';
+					images += '<hr>'
+				});
+
+				var page = '<html><head><title>' + opts.name + ' 大图预览</title></head>'
+					+ '<body style="width: 100%; max-width: 100%;"><h1 style="text-align: center;">'
+					+ opts.name + '</h1>'
+					+ images + '</body></html>';
+
+				var myWindow = window.open('', '大图预览', 'width=100%,resizable=1');
+				myWindow.document.write(page)
+			});
 		}
 	};
 
@@ -233,16 +257,17 @@ function Uploader($trigger, opts) {
 			domain: 'http://',   //bucket 域名，下载资源时用到，**有downtoken_url，这个就不需要了。**
 			max_file_size: '100mb',   //最大文件体积限制
 			chunk_size: '4mb',  //分块上传时，每片的体积 (这个值如果大于4M，会被qiniu js sdk reset)
-			flash_swf_url: './Moxie.swf',  //引入flash,相对路径
+			flash_swf_url: 'public/packages/zofe/rapyd/assets/qn-file/Moxie.swf',  //引入flash,相对路径
 			max_retries: 3,      //上传失败最大重试次数
 			dragdrop: false,     //开启可拖曳上传
 			auto_start: true,                 //选择文件后自动上传，若关闭需要自己绑定事件触发上传,
 			canSendBinary: true,
+			resize: opts.compress,
 			init: {
 				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
 						/* 需要压缩 */
-						if (!$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
+						if (false && !$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
 							var _id = 'compressing-' + file.id;
 							that.previewer.append($('<span />', {
 								id: _id,
