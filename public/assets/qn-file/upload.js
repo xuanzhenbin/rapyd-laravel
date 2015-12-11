@@ -77,14 +77,18 @@ function Uploader($trigger, opts) {
 							'id': that.browseBtnId,
 							'class': 'btn btn-primary btn-sm',
 							'html': '添加' + opts.typeTitle + '（可多选）'
-						}) : ''
+						}) : $('<span />', {
+							'class': 'btn btn-success btn-sm qn-preview',
+							'html': '大图预览'
+						})
 					]
 				}),
 				$('<div/>', {'class': 'panel-body'})
 			]
 		}));
 
-		this.previewer = $('#' + this.containerId).find('.panel-body');
+		var $container = $('#' + this.containerId);
+		this.previewer = $container.find('.panel-body');
 		this.initQiNiuUploader();
 
 		var val = this.getValue();
@@ -96,6 +100,26 @@ function Uploader($trigger, opts) {
 
 		if (this.isModify() && opts.required) {
 			this.bindRequired();
+		}
+
+		if (!that.isModify()) {
+			$container.find('.qn-preview').on('click', function () {
+				var images = '';
+				var files = fileList[opts.inputName][opts.name];
+				$.each($.isEmptyObject(files) ? [] : files, function (idx, key) {
+					images += '<a href="' + fileLinks[key].url
+						+ '"><img src="' + fileLinks[key].url + '" style="width: 100%"></a>';
+					images += '<hr>'
+				});
+
+				var page = '<html><head><title>' + opts.name + ' 大图预览</title></head>'
+					+ '<body style="width: 100%; max-width: 100%;"><h1 style="text-align: center;">'
+					+ opts.name + '</h1>'
+					+ images + '</body></html>';
+
+				var myWindow = window.open('', '大图预览', 'width=100%,resizable=1');
+				myWindow.document.write(page)
+			});
 		}
 	};
 
