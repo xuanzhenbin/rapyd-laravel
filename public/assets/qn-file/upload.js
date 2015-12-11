@@ -267,7 +267,7 @@ function Uploader($trigger, opts) {
 				'FilesAdded': function (up, files) {
 					plupload.each(files, function (file) {
 						/* 需要压缩 */
-						if (false && !$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
+						if (!$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
 							var _id = 'compressing-' + file.id;
 							that.previewer.append($('<span />', {
 								id: _id,
