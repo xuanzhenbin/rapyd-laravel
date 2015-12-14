@@ -27,6 +27,7 @@ jQuery.fn.qnUploader = function (opts) {
 var PREFIX_UPLOADER_BLOCK = 'qn-upload-block-';
 var PREFIX_UPLOADER_PICKER = 'qn-upload-picker-';
 
+
 function Uploader($trigger, opts) {
 	// 上层的的div
 	this.group = $trigger.closest('.qn-upload');
@@ -107,13 +108,13 @@ function Uploader($trigger, opts) {
 				var images = '';
 				var files = fileList[opts.inputName][opts.name];
 				$.each($.isEmptyObject(files) ? [] : files, function (idx, key) {
+					images += '<hr>';
 					images += '<a href="' + fileLinks[key].url
-						+ '"><img src="' + fileLinks[key].url + '" style="width: 100%"></a>';
-					images += '<hr>'
+						+ '"><img src="' + fileLinks[key].url + '" style="max-width: 100%"></a>';
 				});
 
 				var page = '<html><head><title>' + opts.name + ' 大图预览</title></head>'
-					+ '<body style="width: 100%; max-width: 100%;"><h1 style="text-align: center;">'
+					+ '<body style="width: 100%; max-width: 100%; text-align: center;"><h1>'
 					+ opts.name + '</h1>'
 					+ images + '</body></html>';
 
@@ -184,7 +185,7 @@ function Uploader($trigger, opts) {
 			'id': 'block-' + file.id,
 			'class': 'file-block img-thumbnail text-center',
 			'style': 'margin-right: 10px;',
-			'html': '<span class="btn btn-xs btn-warning btn-block file-delete">0%</span>'
+			'html': '<span class="btn btn-xs btn-warning btn-block file-delete">上传中</span>'
 		});
 
 		if (opts.type == 'image') {
@@ -238,6 +239,10 @@ function Uploader($trigger, opts) {
 		this.uploader.removeFile(file);
 	};
 
+	this.isNeedCompress = function (file) {
+		return !$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1
+	};
+
 	// 初始化七牛的 uploader & 真正的上传过程
 	this.initQiNiuUploader = function () {
 		var qn = new QiniuJsSDK();
@@ -265,31 +270,25 @@ function Uploader($trigger, opts) {
 			canSendBinary: true,
 			init: {
 				'FilesAdded': function (up, files) {
+					var needCompress = [];
 					plupload.each(files, function (file) {
-						/* 需要压缩 */
-						if (!$.isEmptyObject(opts.compress) && opts.type == 'image' && file.name.indexOf('has-compress.') == -1) {
-							var _id = 'compressing-' + file.id;
+						if (that.isNeedCompress(file)) {
 							that.previewer.append($('<span />', {
-								id: _id,
+								id: 'compressing-' + file.id,
 								html: '图片压缩中...',
 								'class': 'badge badge-info'
 							}));
 
-							canvasResize(file.getNative(), {
-								width: opts.compress.width,
-								height: opts.compress.height,
-								crop: opts.compress.crop,
-								quality: opts.compress.quality,
-								callback: function (blob) {
-									$('#' + _id).fadeOut('fast').remove();
-									up.addFile(new o.Blob(null, blob), 'has-compress.' + file.name);
-									that.removeFile(file);
-								}
-							});
+							needCompress.push(file);
 						} else {
 							that.previewFile(file);
 						}
 					});
+
+					if (needCompress.length > 0) {
+						needCompress.reverse();
+						that.resizeFileInQueue(up, needCompress);
+					}
 				},
 				'UploadProgress': function (up, file) {
 					var $imgBtn = $('#block-' + file.id).find('.btn');
@@ -297,7 +296,10 @@ function Uploader($trigger, opts) {
 						if (file.percent == 100) {
 							$imgBtn.removeClass('btn-warning');
 							$imgBtn.addClass('btn-danger');
-							$imgBtn.text('删除');
+							$imgBtn.text('上传完成');
+							setTimeout(function () {
+								$imgBtn.text('删除');
+							}, 1000);
 						} else {
 							$imgBtn.text(file.percent + '%');
 						}
@@ -330,5 +332,28 @@ function Uploader($trigger, opts) {
 				}
 			}
 		});
+	};
+
+	this.resizeFileInQueue = function (up, files) {
+		if ($.isEmptyObject(files)) {
+			that.previewer.find('p.text-danger').remove();
+			return null;
+		} else {
+			var file = files.pop();
+
+			canvasResize(file.getNative(), {
+				width: opts.compress.width,
+				height: opts.compress.height,
+				crop: opts.compress.crop,
+				quality: opts.compress.quality,
+				callback: function (blob) {
+					$('#compressing-' + file.id).fadeOut('fast').remove();
+					up.addFile(new o.Blob(null, blob), 'has-compress.' + file.name);
+
+					that.removeFile(file);
+					that.resizeFileInQueue(up, files);
+				}
+			});
+		}
 	};
 }
