@@ -286,10 +286,6 @@ function Uploader($trigger, opts) {
 					});
 
 					if (needCompress.length > 0) {
-						if (needCompress.length > 5) {
-							that.previewer.prepend('<p class="text-danger">同时压缩/上传多个大图会花费一段时间，最长一分钟，请稍候！</p>')
-						}
-
 						needCompress.reverse();
 						that.resizeFileInQueue(up, needCompress);
 					}
