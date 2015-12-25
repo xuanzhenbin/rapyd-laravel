@@ -20,6 +20,9 @@ use Zofe\Rapyd\DataForm\Field\Number;
 use Zofe\Rapyd\DataForm\Field\Numberrange;
 use Zofe\Rapyd\DataForm\Field\Text;
 use Zofe\Rapyd\DataForm\Field\Textarea;
+use Zofe\Rapyd\DataForm\Field\Multiselect;
+use Zofe\Rapyd\DataForm\Field\Iframe;
+use Zofe\Rapyd\DataForm\Field\Container;
 use Zofe\Rapyd\Widget;
 use Illuminate\Html\FormFacade as Form;
 use Illuminate\Support\Facades\View;
@@ -64,6 +67,9 @@ use Zofe\Rapyd\Rapyd;
  * @method Colorpicker  addColorpicker (string $name, string $label, string $validation = '')
  * @method Date         addDate        (string $name, string $label, string $validation = '')
  * @method Auto         addAuto        (string $name, string $label, string $validation = '')
+ * @method Container    addContainer   (string $name, string $label, string $validation = '')
+ * @method Iframe       addIframe      (string $name, string $label, string $validation = '')
+ * @method Multiselect  addMultiselect (string $name, string $label, string $validation = '')
  *
  * @package Zofe\Rapyd\DataForm
  */
@@ -496,7 +502,7 @@ class DataForm extends Widget
             } elseif ($result && is_a($result, 'Illuminate\View\View')) {
                 $this->custom_output = $result;
             }
-            
+
             //reprocess if an error is added in closure
             if ($this->process_status == 'error') {
                 $this->process();
@@ -565,7 +571,7 @@ class DataForm extends Widget
     {
         return ($this->custom_output != null) ? true : false;
     }
-    
+
     /**
      * @return string
      */
@@ -601,7 +607,7 @@ class DataForm extends Widget
      */
     public function saved(\Closure $callable)
     {
-         $this->form_callable = $callable;
+        $this->form_callable = $callable;
     }
 
     /**
