@@ -5,26 +5,30 @@ namespace Zofe\Rapyd\DataForm;
 use Illuminate\Database\Eloquent\Model;
 use Zofe\Rapyd\DataForm\Field\Auto;
 use Zofe\Rapyd\DataForm\Field\Autocomplete;
+use Zofe\Rapyd\DataForm\Field\Checkbox;
+use Zofe\Rapyd\DataForm\Field\Checkboxgroup;
+use Zofe\Rapyd\DataForm\Field\Container;
 use Zofe\Rapyd\DataForm\Field\Colorpicker;
 use Zofe\Rapyd\DataForm\Field\Date;
+use Zofe\Rapyd\DataForm\Field\Daterange;
+use Zofe\Rapyd\DataForm\Field\Datetime;
 use Zofe\Rapyd\DataForm\Field\Field;
 use Zofe\Rapyd\DataForm\Field\File;
-use Zofe\Rapyd\DataForm\Field\QNFile;
 use Zofe\Rapyd\DataForm\Field\Hidden;
+use Zofe\Rapyd\DataForm\Field\Iframe;
+use Zofe\Rapyd\DataForm\Field\Multiselect;
+use Zofe\Rapyd\DataForm\Field\Number;
+use Zofe\Rapyd\DataForm\Field\Numberrange;
 use Zofe\Rapyd\DataForm\Field\Password;
+use Zofe\Rapyd\DataForm\Field\QNFile;
 use Zofe\Rapyd\DataForm\Field\Radiogroup;
 use Zofe\Rapyd\DataForm\Field\Redactor;
 use Zofe\Rapyd\DataForm\Field\Select;
 use Zofe\Rapyd\DataForm\Field\Tags;
-use Zofe\Rapyd\DataForm\Field\Number;
-use Zofe\Rapyd\DataForm\Field\Numberrange;
 use Zofe\Rapyd\DataForm\Field\Text;
 use Zofe\Rapyd\DataForm\Field\Textarea;
-use Zofe\Rapyd\DataForm\Field\Multiselect;
-use Zofe\Rapyd\DataForm\Field\Iframe;
-use Zofe\Rapyd\DataForm\Field\Container;
 use Zofe\Rapyd\Widget;
-use Illuminate\Html\FormFacade as Form;
+use Collective\Html\FormFacade as Form;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Input;
@@ -35,41 +39,29 @@ use Zofe\Rapyd\Rapyd;
 /**
  * Class DataForm
  *
- * @method Text         text        (string $name, string $label, $validation = '')
- * @method Hidden       hidden      (string $name, string $label, string $validation = '')
- * @method Password     password    (string $name, string $label, string $validation = '')
- * @method File         file        (string $name, string $label, string $validation = '')
- * @method Textarea     textarea    (string $name, string $label, string $validation = '')
- * @method Select       select      (string $name, string $label, string $validation = '')
- * @method Radiogroup   radiogroup  (string $name, string $label, string $validation = '')
- * @method Redactor     redactor    (string $name, string $label, string $validation = '')
- * @method Autocomplete autocomplete(string $name, string $label, string $validation = '')
- * @method Tags         tags        (string $name, string $label, string $validation = '')
- * @method Number       number      (string $name, string $label, string $validation = '')
- * @method Numberrange  numberrange (string $name, string $label, string $validation = '')
- * @method Colorpicker  colorpicker (string $name, string $label, string $validation = '')
- * @method Date         date        (string $name, string $label, string $validation = '')
- * @method Auto         auto        (string $name, string $label, string $validation = '')
- *
- * @method Text         addText        (string $name, string $label, $validation = '')
- * @method Hidden       addHidden      (string $name, string $label, string $validation = '')
- * @method Password     addPassword    (string $name, string $label, string $validation = '')
- * @method File         addFile        (string $name, string $label, string $validation = '')
- * @method QNFile       addQNFile        (string $name, string $label, string $validation = '')
- * @method Textarea     addTextarea    (string $name, string $label, string $validation = '')
- * @method Select       addSelect      (string $name, string $label, string $validation = '')
- * @method Radiogroup   addRadiogroup  (string $name, string $label, string $validation = '')
- * @method Redactor     addRedactor    (string $name, string $label, string $validation = '')
- * @method Autocomplete addAutocomplete(string $name, string $label, string $validation = '')
- * @method Tags         addTags        (string $name, string $label, string $validation = '')
- * @method Number       addNumber      (string $name, string $label, string $validation = '')
- * @method Numberrange  addNumberrange (string $name, string $label, string $validation = '')
- * @method Colorpicker  addColorpicker (string $name, string $label, string $validation = '')
- * @method Date         addDate        (string $name, string $label, string $validation = '')
- * @method Auto         addAuto        (string $name, string $label, string $validation = '')
- * @method Container    addContainer   (string $name, string $label, string $validation = '')
- * @method Iframe       addIframe      (string $name, string $label, string $validation = '')
- * @method Multiselect  addMultiselect (string $name, string $label, string $validation = '')
+ * @method Auto           addAuto        (string $name, string $label, string $validation = '')
+ * @method Autocomplete   addAutocomplete(string $name, string $label, string $validation = '')
+ * @method Checkbox       addCheckbox (string $name, string $label, string $validation = '')
+ * @method Checkboxgroup  addCheckboxgroup (string $name, string $label, string $validation = '')
+ * @method Colorpicker    addColorpicker (string $name, string $label, string $validation = '')
+ * @method Container      addContainer   (string $name, string $label, string $validation = '')
+ * @method Date           addDate        (string $name, string $label, string $validation = '')
+ * @method Daterange      addDaterange        (string $name, string $label, string $validation = '')
+ * @method Datetime       addDatetime        (string $name, string $label, string $validation = '')
+ * @method File           addFile        (string $name, string $label, string $validation = '')
+ * @method Hidden         addHidden      (string $name, string $label, string $validation = '')
+ * @method Iframe         addIframe      (string $name, string $label, string $validation = '')
+ * @method Multiselect    addMultiselect (string $name, string $label, string $validation = '')
+ * @method Number         addNumber      (string $name, string $label, string $validation = '')
+ * @method Numberrange    addNumberrange (string $name, string $label, string $validation = '')
+ * @method Password       addPassword    (string $name, string $label, string $validation = '')
+ * @method QNFile         addQNFile        (string $name, string $label, string $validation = '')
+ * @method Radiogroup     addRadiogroup  (string $name, string $label, string $validation = '')
+ * @method Redactor       addRedactor    (string $name, string $label, string $validation = '')
+ * @method Select         addSelect      (string $name, string $label, string $validation = '')
+ * @method Tags           addTags        (string $name, string $label, string $validation = '')
+ * @method Textarea       addTextarea    (string $name, string $label, string $validation = '')
+ * @method Text           addText        (string $name, string $label, $validation = '')
  *
  * @package Zofe\Rapyd\DataForm
  */

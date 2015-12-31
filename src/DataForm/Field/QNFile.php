@@ -3,7 +3,7 @@
 use Barryvdh\Debugbar\JavascriptRenderer;
 use Zofe\Rapyd\Helpers\HTML;
 use Zofe\Rapyd\Rapyd;
-use Illuminate\Html\FormFacade as Form;
+use Collective\Html\FormFacade as Form;
 
 class QNFile extends Field
 {
