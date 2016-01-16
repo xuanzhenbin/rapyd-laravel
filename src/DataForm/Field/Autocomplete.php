@@ -130,6 +130,7 @@ class Autocomplete extends Field
                     $output = "";
                 } else {
                     if ($this->relation != null) {
+                        $this->model->load($this->rel_name);
                         $value = $this->model->{$this->rel_name}->{$this->rel_field};
                     } else {
                         $value = $this->value;
