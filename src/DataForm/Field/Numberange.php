@@ -29,7 +29,7 @@ class Numberrange extends Number
             case "disabled":
             case "show":
 
-                if ($this->type == 'hidden' || $this->value == "") {
+                if ($this->type == 'hidden' || $this->value === "") {
                     $output = "";
                 } elseif ((!isset($this->value))) {
                     $output = $this->layout['null_label'];
