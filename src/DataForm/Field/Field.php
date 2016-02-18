@@ -49,7 +49,10 @@ abstract class Field extends Widget
     public $model_relations;
     public $insert_value = null;
     public $update_value = null;
+    public $insert_description = null;
+    public $update_description = null;
     public $show_value = null; //default value in visualization
+    public $edited = false;
     public $options = array();
     public $mask = null;
     public $group;
@@ -62,9 +65,11 @@ abstract class Field extends Widget
     public $is_hidden = false;
     public $options_table = '';
     public $options_key = null;
-    public $has_error = '';
+    public $orientation = 'horizontal';
+    public $has_placeholder = false;
     public $has_label = true;
     public $has_wrapper = true;
+    public $has_error = '';
     public $messages = array();
     public $query_scope;
     public $query_scope_params = [];
@@ -73,7 +78,7 @@ abstract class Field extends Widget
     public $layout = array(
         'field_separator' => '<br />',
         'option_separator' => '',
-        'null_label' => '[未填写]',
+        'null_label' => '[null]',
     );
 
     public $rule = [];
@@ -85,7 +90,7 @@ abstract class Field extends Widget
     {
         parent::__construct();
 
-        $this->attributes = Config::get('rapyd.field.attributes');
+        $this->attributes = config('rapyd.fields.attributes', ['class'=>'form-control']);
         $this->model = $model;
         $this->model_relations = $model_relations;
 
@@ -235,10 +240,10 @@ abstract class Field extends Widget
         return $this;
     }
 
-    public function insertValue($insert_value)
+    public function insertValue($insert_value, $insert_description = null)
     {
         $this->insert_value = $insert_value;
-
+        $this->insert_description = $insert_description;
         return $this;
     }
 
@@ -249,10 +254,10 @@ abstract class Field extends Widget
         return $this;
     }
 
-    public function updateValue($update_value)
+    public function updateValue($update_value, $update_description = null)
     {
         $this->update_value = $update_value;
-
+        $this->update_description = $update_description;
         return $this;
     }
 
@@ -308,8 +313,14 @@ abstract class Field extends Widget
 
         } elseif (($this->status == "create") && ($this->insert_value != null)) {
             $this->value = $this->insert_value;
+            if ($this->insert_description != null) {
+                $this->description = $this->insert_description;
+            }
         } elseif (($this->status == "modify") && ($this->update_value != null)) {
             $this->value = $this->update_value;
+            if ($this->update_description != null) {
+                $this->description = $this->update_description;
+            }
         } elseif (($this->status == "show") && ($this->show_value != null)) {
             $this->value = $this->show_value;
         } elseif (isset($this->model) && $this->relation != null) {
@@ -356,7 +367,6 @@ abstract class Field extends Widget
         } elseif ((isset($this->model)) && (Input::get($this->name) === null) && ($this->model->offsetExists($this->db_name))) {
 
             $this->value = $this->model->getAttribute($this->db_name);
-
         }
 
         $this->old_value = $this->value;
@@ -390,13 +400,17 @@ abstract class Field extends Widget
                 $this->new_value = HTML::xssfilter(Input::get($this->name));
             }
         } elseif (($this->action == "insert") && ($this->insert_value != null)) {
+            $this->edited = true;
             $this->new_value = $this->insert_value;
         } elseif (($this->action == "update") && ($this->update_value != null)) {
+            $this->edited = true;
             $this->new_value = $this->update_value;
+        } elseif ($this->type == 'auto') {
+            //if is auto and no default is matched, keep the old value
+            $this->new_value = $this->value;
         } else {
             $this->action = "idle";
         }
-
         if ($this->new_value == "") {
             $this->new_value = null;
         }
@@ -481,32 +495,45 @@ abstract class Field extends Widget
         return $this;
     }
 
+    public function editable() 
+    {
+        if ($this->mode == 'readonly') {
+            return $this->edited;
+        }
+        return true;
+    }
+    
     public function autoUpdate($save = false)
     {
         $this->getValue();
         $this->getNewValue();
-
+        if (!$this->editable()) return true;
+        
         if (is_object($this->model) && isset($this->db_name)) {
             if (
                 !(Schema::connection($this->model->getConnectionName())->hasColumn($this->model->getTable(), $this->db_name)
                 || $this->model->hasSetMutator($this->db_name))
-                || is_a($this->relation, 'Illuminate\Database\Eloquent\Relations\HasOne')
+                || is_a($this->relation, 'Illuminate\Database\Eloquent\Relations\Relation') //Relation
                 ) {
 
-                $self = $this; //fix old 5.3 you can't pass this in a closure
+                //belongsTo relation 
+                if (is_a($this->relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
+                    $this->model->setAttribute($this->db_name, $this->new_value);
+                    return true;
+                }
+                //other kind of relations are postponed
+                $self = $this; 
                 $this->model->saved(function () use ($self) {
                     $self->updateRelations();
                 });
-
+                
                 //check for relation then exit
                 return true;
             }
-
-            //if (isset($this->new_value)) {
-            $this->model->setAttribute($this->db_name, $this->new_value);
-            //} else {
-            //    $this->model->setAttribute($this->db_name, $this->value);
-            //}
+            if (!is_a($this->relation, 'Illuminate\Database\Eloquent\Relations\Relation')) {
+                $this->model->setAttribute($this->db_name, $this->new_value);
+            }
+            
             if ($save) {
                 return $this->model->save();
             }
@@ -517,7 +544,6 @@ abstract class Field extends Widget
 
     public function updateRelations()
     {
-
         if (isset($this->new_value)) {
             $data = $this->new_value;
         } else {
@@ -525,6 +551,8 @@ abstract class Field extends Widget
         }
         if ($this->relation != null) {
 
+            //dd($this->relation, get_class($this->relation));
+            
             $methodClass = get_class($this->relation);
             switch ($methodClass) {
                 case 'Illuminate\Database\Eloquent\Relations\BelongsToMany':
@@ -560,6 +588,7 @@ abstract class Field extends Widget
                     $relation->{$this->rel_field} = $data;
                     $this->relation->save( $relation );
                     break;
+                
                 case 'Illuminate\Database\Eloquent\Relations\HasOneOrMany':
 
                 case 'Illuminate\Database\Eloquent\Relations\HasMany':
@@ -584,7 +613,7 @@ abstract class Field extends Widget
      */
     protected function parseString($string, $is_view = false)
     {
-        if (is_object($this->model) && (strpos($string,'{{') !== false || $is_view)) {
+        if (is_object($this->model) && (strpos($string,'{{') !== false || strpos($string,'{!!') !== false || $is_view)) {
             $fields = $this->model->getAttributes();
             $relations = $this->model->getRelations();
             $array = array_merge($fields, $relations, ['model'=>$this->model]) ;
@@ -628,8 +657,8 @@ abstract class Field extends Widget
                 $this->attributes['type'] = ($this->$attribute == 'input') ? 'text' : $this->$attribute;
             }
 
-            if ($this->orientation == 'inline') {
-                if ($this->type != 'select') {
+            if ($this->orientation == 'inline' || $this->has_placeholder) {
+                if ($this->type!='select') {
                     $this->attributes["placeholder"] = $this->label;
                 }
             }
@@ -660,8 +689,8 @@ abstract class Field extends Widget
     public function all()
     {
         $output  = "";
-        if ($this->has_wrapper && $this->has_label) {
-            $output .= "<label for=\"{$this->name}\" class=\"{$this->req}\">{$this->label}</label>";            
+        if ($this->has_wrapper && $this->has_label && $this->orientation != 'inline') {
+            $output .= "<label for=\"{$this->name}\" class=\"{$this->req}\">{$this->label}</label>";
         }
         $output .= $this->output;
         $output  = '<span id="div_'.$this->name.'">'.$output.'</span>';

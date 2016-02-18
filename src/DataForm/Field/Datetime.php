@@ -8,19 +8,32 @@ use Zofe\Rapyd\Rapyd;
 class Datetime extends Field
 {
     public $type = "datetime";
-    public $format = 'm/d/Y H:i';
+    public $format = 'm/d/Y H:i:s';
+    public $store_as = 'Y-m-d H:i:s';
     public $language = 'en';
 
+    public function __construct($name, $label, &$model = null, &$model_relations = null)
+    {
+        
+        parent::__construct($name, $label, $model, $model_relations);
+        $this->language = config('app.locale', $this->language);
+        $this->format = config('rapyd.fields.datetime.format', $this->format);
+        $this->store_as = config('rapyd.fields.datetime.store_as', $this->store_as);
+        //dd($this->language, $this->format, $this->store_as);
+    }
+    
     /**
      * set instarnal preview datetime format
      * @param $format valid php datetime format
      * @param string $language valid datetimePicker language string http://www.malot.fr/bootstrap-datetimepicker/
      */
-    public function format($format, $language = 'en')
+    public function format($format, $language = 'en', $store_as =null)
     {
         $this->format = $format;
         $this->language = $language;
-
+        if ($store_as) {
+            $this->store_as = $store_as;
+        }
         return $this;
     }
 
@@ -29,13 +42,13 @@ class Datetime extends Field
      */
     protected function isodatetimeToHuman($isodatetime)
     {
-        $datetime = \dateTime::createFromFormat( 'Y-m-d H:i', $isodatetime);
+        $datetime = \DateTime::createFromFormat( $this->store_as, $isodatetime);
         if (!$datetime) return '';
         $timestamp = $datetime->getTimestamp();
         if ($timestamp < 1) {
             return "";
         }
-        $isodate = date($this->format, $timestamp);
+        $isodatetime = date($this->format, $timestamp);
 
         return $isodatetime;
     }
@@ -45,13 +58,13 @@ class Datetime extends Field
      */
     protected function humandatetimeToIso($humandatetime)
     {
-        $datetime = \dateTime::createFromFormat( $this->format, $humandatetime);
+        $datetime = \DateTime::createFromFormat( $this->format, $humandatetime);
         if (!$datetime) return '';
         $timestamp = $datetime->getTimestamp();
         if ($timestamp < 1) {
             return "";
         }
-        $humandatetime = date('Y-m-d H:i', $timestamp);
+        $humandatetime = date($this->store_as, $timestamp);
 
         return $humandatetime;
     }
@@ -114,7 +127,7 @@ class Datetime extends Field
                 if ($this->language != "en") {
                     Rapyd::js('datetimepicker/locales/bootstrap-datetimepicker.'.$this->language.'.js');
                 }
-
+                
                 $output  = Form::text($this->name, $this->value,  $this->attributes);
                 Rapyd::script("
                         $('#".$this->name."').datetimepicker({

@@ -12,17 +12,11 @@ class Date extends Field
     public $language = 'zh-CN';
     public $clause = "where";
 
-    /**
-     * set instarnal preview date format
-     * @param $format valid php date format
-     * @param string $language valid DatePicker language string http://bootstrap-datepicker.readthedocs.org/en/release/options.html#language
-     */
-    public function format($format, $language = 'zh-CN')
+    public function __construct($name, $label, &$model = null, &$model_relations = null)
     {
-        $this->format = $format;
-        $this->language = $language;
-
-        return $this;
+        parent::__construct($name, $label, $model, $model_relations);
+        $this->language = config('app.locale', $this->language);
+        $this->format = config('rapyd.fields.date.format', $this->format);
     }
 
     /**

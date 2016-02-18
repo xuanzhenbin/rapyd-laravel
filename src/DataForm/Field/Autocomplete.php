@@ -61,7 +61,7 @@ class Autocomplete extends Field
     public function getValue()
     {
         if (!$this->is_local && !$this->record_label && $this->rel_field != "") {
-            $this->remote($this->rel_field, preg_replace('#([a-z0-9_-]+\.)?(.*)#i','$2',$this->rel_key));
+            $this->remote($this->rel_field, trim(strstr($this->rel_key,'.'),'.'));
         }
 
         parent::getValue();
@@ -77,7 +77,7 @@ class Autocomplete extends Field
     public function remote($record_label = null, $record_id = null, $remote = null)
     {
         $this->record_label = ($record_label!="") ? $record_label : $this->db_name ;
-        $this->record_id = ($record_id!="") ? $record_id : $this->db_name ;
+        $this->record_id = ($record_id!="") ? $record_id : preg_replace('#([a-z0-9_-]+\.)?(.*)#i','$2',$this->rel_key);
         if ($remote!="") {
             $this->remote = $remote;
             if (is_array($record_label)) {
@@ -154,6 +154,8 @@ class Autocomplete extends Field
                 } elseif (count($this->local_options)) {
 
                     $autocomplete = $this->description;
+                } elseif ($this->description!=''){
+                    $autocomplete = $this->description;
                 } else {
                     $autocomplete = $this->value;
                 }
@@ -225,7 +227,14 @@ class Autocomplete extends Field
                             $('#{$this->name}').val('');
                         }
                      });
-                    
+
+                    $('#th_{$this->name} .typeahead').keypress(function (e) {
+                        if (e.which == 13) {
+                            e.preventDefault();
+                        }
+                    });
+
+
 acp;
 
                     Rapyd::script($script);
