@@ -10,7 +10,7 @@
     @endif
 
 @else
-    <div class="form-group{!!$field->has_error!!}" id="fg_{!! $field->name !!}">
+    <div class="form-group{!!$field->has_error!!} clearfix" id="fg_{!! $field->name !!}">
 
         @if ($field->has_label)
             <label for="{!! $field->name !!}" class="col-sm-2 control-label{!! $field->req !!}">{!! $field->label !!}</label>
@@ -19,7 +19,7 @@
             <div class="col-sm-12" id="div_{!! $field->name !!}">
         @endif
             
-            
+
             {!! $field->output !!}
 
             @if(count($field->messages))
