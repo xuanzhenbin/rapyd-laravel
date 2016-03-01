@@ -33,7 +33,7 @@ class Select extends Field
                 if (!isset($this->value)) {
                     $output = $this->layout['null_label'];
                 } else {
-                    $output = $this->description;
+                    $output = $this->description ?: $this->value;
                 }
                 $output = "<div class='help-block'>".$output."&nbsp;</div>";
                 break;
