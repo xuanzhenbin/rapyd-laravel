@@ -163,6 +163,7 @@ class Autocomplete extends Field
                 $output  =  '<span id="th_'.$this->name.'">'.$output.'</span>';
 
                 if ($this->remote) {
+                    $glue = strpos($this->remote, '?') === false ? '?' : '&';
                     $script = <<<acp
 
                     var blod_{$this->name} = new Bloodhound({
@@ -170,7 +171,7 @@ class Autocomplete extends Field
                         queryTokenizer: Bloodhound.tokenizers.whitespace,
                         limit: 10,
                         remote: {
-                            url: '{$this->remote}?q=%QUERY',
+                            url: '{$this->remote}{$glue}q=%QUERY',
                             ajax: {
                                 complete: function(response){
                                     response.responseJSON.forEach(function (item) {
