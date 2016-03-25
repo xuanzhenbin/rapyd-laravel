@@ -9,20 +9,19 @@ class DataGrid extends DataSet
 {
 
     protected $fields = array();
-    /** @var Column[]  */
+    /** @var Column[] */
     public $columns = array();
     public $headers = array();
     public $rows = array();
     public $output = "";
     public $attributes = array("class" => "table");
-    public $checkbox_form = false;
 
     protected $row_callable = array();
 
     /**
      * @param string $name
      * @param string $label
-     * @param bool   $orderby
+     * @param bool $orderby
      *
      * @return Column
      */
@@ -30,12 +29,13 @@ class DataGrid extends DataSet
     {
         $column = new Column($name, $label, $orderby);
         $this->columns[$column->name] = $column;
-        if (!in_array($name,array("_edit"))) {
+        if (!in_array($name, array("_edit"))) {
             $this->headers[] = $label;
         }
         if ($orderby) {
             $this->addOrderBy($column->orderby_field);
         }
+
         return $column;
     }
 
@@ -73,10 +73,10 @@ class DataGrid extends DataSet
             $this->rows[] = $row;
         }
 
-        return \View::make($view, array('dg' => $this, 'buttons'=>$this->button_container, 'label'=>$this->label));
+        return \View::make($view, array('dg' => $this, 'buttons' => $this->button_container, 'label' => $this->label));
     }
 
-    public function buildCSV($file = '', $timestamp = '', $sanitize = true,$del = array())
+    public function buildCSV($file = '', $timestamp = '', $sanitize = true, $del = array())
     {
         $this->limit = null;
         parent::build();
@@ -84,10 +84,10 @@ class DataGrid extends DataSet
         $segments = \Request::segments();
 
         $filename = ($file != '') ? basename($file, '.csv') : end($segments);
-        $filename = preg_replace('/[^0-9a-z\._-]/i', '',$filename);
-        $filename .= ($timestamp != "") ? date($timestamp).".csv" : ".csv";
+        $filename = preg_replace('/[^0-9a-z\._-]/i', '', $filename);
+        $filename .= ($timestamp != "") ? date($timestamp) . ".csv" : ".csv";
 
-        $save = (bool) strpos($file,"/");
+        $save = (bool)strpos($file, "/");
 
         //Delimiter
         $delimiter = array();
@@ -96,32 +96,35 @@ class DataGrid extends DataSet
         $delimiter['line_ending'] = isset($del['line_ending']) ? $del['line_ending'] : "\n";
 
         if ($save) {
-            $handle = fopen(public_path().'/'.dirname($file)."/".$filename, 'w');
+            $handle = fopen(public_path() . '/' . dirname($file) . "/" . $filename, 'w');
 
         } else {
 
-            $headers  = array(
+            $headers = array(
                 'Content-Type' => 'text/csv',
-                'Pragma'=>'no-cache',
+                'Pragma' => 'no-cache',
                 'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-                'Content-Disposition' => 'attachment; filename="' . $filename.'"');
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+            );
 
             $handle = fopen('php://output', 'w');
             ob_start();
         }
 
-        fputs($handle, $delimiter['enclosure'].implode($delimiter['enclosure'].$delimiter['delimiter'].$delimiter['enclosure'], $this->headers) .$delimiter['enclosure'].$delimiter['line_ending']);
+        fputs($handle, $delimiter['enclosure'] . implode($delimiter['enclosure'] . $delimiter['delimiter'] . $delimiter['enclosure'],
+                $this->headers) . $delimiter['enclosure'] . $delimiter['line_ending']);
 
         foreach ($this->data as $tablerow) {
             $row = new Row($tablerow);
 
             foreach ($this->columns as $column) {
 
-                if (in_array($column->name,array("_edit")))
+                if (in_array($column->name, array("_edit"))) {
                     continue;
+                }
 
                 $cell = new Cell($column->name);
-                $value =  str_replace('"', '""',str_replace(PHP_EOL, '', strip_tags($this->getCellValue($column, $tablerow, $sanitize))));
+                $value = str_replace('"', '""', str_replace(PHP_EOL, '', strip_tags($this->getCellValue($column, $tablerow, $sanitize))));
                 $cell->value($value);
                 $row->add($cell);
             }
@@ -132,7 +135,8 @@ class DataGrid extends DataSet
                 }
             }
 
-            fputs($handle, $delimiter['enclosure'] . implode($delimiter['enclosure'].$delimiter['delimiter'].$delimiter['enclosure'], $row->toArray()) . $delimiter['enclosure'].$delimiter['line_ending']);
+            fputs($handle, $delimiter['enclosure'] . implode($delimiter['enclosure'] . $delimiter['delimiter'] . $delimiter['enclosure'],
+                    $row->toArray()) . $delimiter['enclosure'] . $delimiter['line_ending']);
         }
 
         fclose($handle);
@@ -153,17 +157,18 @@ class DataGrid extends DataSet
         $filename .= date($timestamp);
 
 
-        \Excel::create($filename, function ($excel) use($sanitize) {
+        \Excel::create($filename, function ($excel) use ($sanitize) {
 
-            $excel->sheet('Sheetname', function($sheet) use($sanitize) {
+            $excel->sheet('Sheetname', function ($sheet) use ($sanitize) {
                 $sheet->appendRow($this->headers);
 
                 foreach ($this->data as $tablerow) {
                     $row = new Row($tablerow);
 
                     foreach ($this->columns as $column) {
-                        if (in_array($column->name,array("_edit")))
+                        if (in_array($column->name, array("_edit"))) {
                             continue;
+                        }
 
                         $cell = new Cell($column->name);
                         $sanitize = (count($column->filters) || $column->cell_callable) ? false : true;
@@ -183,7 +188,9 @@ class DataGrid extends DataSet
                         }
                     }
                     //avoiding output html codes
-                    $_row = array_map(function($val) {return strip_tags($val);}, $row->toArray());
+                    $_row = array_map(function ($val) {
+                        return strip_tags($val);
+                    }, $row->toArray());
                     $sheet->appendRow($_row);
                 }
 
@@ -198,29 +205,30 @@ class DataGrid extends DataSet
     {
         //blade
         if (strpos($column->name, '{{') !== false ||
-            strpos($column->name, '{!!') !== false) {
+            strpos($column->name, '{!!') !== false
+        ) {
 
             if (is_object($tablerow) && method_exists($tablerow, "getAttributes")) {
                 $fields = $tablerow->getAttributes();
                 $relations = $tablerow->getRelations();
-                $array = array_merge($fields, $relations) ;
+                $array = array_merge($fields, $relations);
 
                 $array['row'] = $tablerow;
 
             } else {
-                $array = (array) $tablerow;
+                $array = (array)$tablerow;
             }
 
             $value = $this->parser->compileString($column->name, $array);
 
             //eager loading smart syntax  relation.field
-        } elseif (preg_match('#^[a-z0-9_-]+(?:\.[a-z0-9_-]+)+$#i',$column->name, $matches) && is_object($tablerow) ) {
+        } elseif (preg_match('#^[a-z0-9_-]+(?:\.[a-z0-9_-]+)+$#i', $column->name, $matches) && is_object($tablerow)) {
             //switch to blade and god bless eloquent
-            $_relation = '$'.trim(str_replace('.','->', $column->name));
-            $expression = '{{ isset('. $_relation .') ? ' . $_relation . ' : "" }}';
+            $_relation = '$' . trim(str_replace('.', '->', $column->name));
+            $expression = '{{ isset(' . $_relation . ') ? ' . $_relation . ' : "" }}';
             $fields = $tablerow->getAttributes();
             $relations = $tablerow->getRelations();
-            $array = array_merge($fields, $relations) ;
+            $array = array_merge($fields, $relations);
             $value = $this->parser->compileString($expression, $array);
 
             //fieldname in a collection
@@ -246,12 +254,12 @@ class DataGrid extends DataSet
                 $array = $tablerow->getAttributes();
                 $array['row'] = $tablerow;
             } else {
-                $array = (array) $tablerow;
+                $array = (array)$tablerow;
             }
-            $value =  '<a href="'.$this->parser->compileString($column->link, $array).'">'.$value.'</a>';
+            $value = '<a href="' . $this->parser->compileString($column->link, $array) . '">' . $value . '</a>';
         }
-        if (count($column->actions)>0) {
-            $key = ($column->key != '') ?  $column->key : $this->key;
+        if (count($column->actions) > 0) {
+            $key = ($column->key != '') ? $column->key : $this->key;
             $keyvalue = @$tablerow->{$key};
 
             $value = \View::make('rapyd::datagrid.actions', array('uri' => $column->uri, 'id' => $keyvalue, 'actions' => $column->actions));
@@ -276,9 +284,9 @@ class DataGrid extends DataSet
             //http://stackoverflow.com/questions/2429642/why-its-impossible-to-throw-exception-from-tostring/27307132#27307132
             try {
                 $this->getGrid();
-            }
-            catch (\Exception $e) {
-                $previousHandler = set_exception_handler(function (){ });
+            } catch (\Exception $e) {
+                $previousHandler = set_exception_handler(function () {
+                });
                 restore_error_handler();
                 call_user_func($previousHandler, $e);
                 die;
@@ -289,7 +297,7 @@ class DataGrid extends DataSet
         return $this->output;
     }
 
-    public function edit($uri, $label='Edit', $actions='show|modify|delete', $key = '')
+    public function edit($uri, $label = 'Edit', $actions = 'show|modify|delete', $key = '')
     {
         return $this->add('_edit', $label)->actions($uri, explode('|', $actions))->key($key);
     }
@@ -301,7 +309,7 @@ class DataGrid extends DataSet
         }
     }
 
-    public function addActions($uri, $label='Edit', $actions='show|modify|delete', $key = '')
+    public function addActions($uri, $label = 'Edit', $actions = 'show|modify|delete', $key = '')
     {
         return $this->edit($uri, $label, $actions, $key);
     }
@@ -316,7 +324,39 @@ class DataGrid extends DataSet
     protected function sanitize($string)
     {
         $result = nl2br(htmlspecialchars($string));
+
         return Config::get('rapyd.sanitize.num_characters') > 0 ? str_limit($result, Config::get('rapyd.sanitize.num_characters')) : $result;
     }
+
+
+
+    /* Begin: 给Form加一个全局CheckBox的支持 */
+
+    protected $checkbox_config = [];
+
+    public function getCheckboxConfig()
+    {
+        return $this->checkbox_config;
+    }
+
+    /**
+     * @param array $action_list 操作按钮名 => 跳转Url 目标页面通过ids参数获取所有选中行的id
+     * @param array $action_list  操作按钮名 => Action
+     * @param array $attributes
+     * @return $this
+     */
+    public function addCheckbox(array $action_list, array $attributes = [])
+    {
+        //当页面上有多个DataGrid的时候不冲突.
+        static $checkbox_id = 0;
+        $key = $this->checkbox_config['key'] = "_cb_" . $checkbox_id++;
+        $this->checkbox_config['actions'] = $action_list;
+
+        return $this->add('checkbox', '')->cell(function ($null, $self) use ($key, $attributes) {
+            return \Form::checkbox($key, $self->id, false, $attributes);
+        });
+    }
+
+    /* End: 给Form加一个全局CheckBox的支持 */
 
 }

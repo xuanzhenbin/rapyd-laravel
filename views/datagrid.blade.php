@@ -1,39 +1,38 @@
-
-
 @include('rapyd::toolbar', array('label'=>$label, 'buttons_right'=>$buttons['TR']))
 
+@include('rapyd::datagrid.checkbox', ['dg' => $dg])
 
 <table{!! $dg->buildAttributes() !!}>
     <thead>
     <tr>
-     @foreach ($dg->columns as $column)
+        @foreach ($dg->columns as $column)
             <th{!! $column->buildAttributes() !!}>
-            @if ($column->orderby)
-                @if ($dg->onOrderby($column->orderby_field, 'asc'))
-                    <span class="glyphicon glyphicon-chevron-up"></span>
-                @else
-                    <a href="{{ $dg->orderbyLink($column->orderby_field,'asc') }}">
+                @if ($column->orderby)
+                    @if ($dg->onOrderby($column->orderby_field, 'asc'))
                         <span class="glyphicon glyphicon-chevron-up"></span>
-                    </a>
-                @endif
-                @if ($dg->onOrderby($column->orderby_field, 'desc'))
-                    <span class="glyphicon glyphicon-chevron-down"></span>
-                @else
-                    <a href="{{ $dg->orderbyLink($column->orderby_field,'desc') }}">
+                    @else
+                        <a href="{{ $dg->orderbyLink($column->orderby_field,'asc') }}">
+                            <span class="glyphicon glyphicon-chevron-up"></span>
+                        </a>
+                    @endif
+                    @if ($dg->onOrderby($column->orderby_field, 'desc'))
                         <span class="glyphicon glyphicon-chevron-down"></span>
-                    </a>
+                    @else
+                        <a href="{{ $dg->orderbyLink($column->orderby_field,'desc') }}">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </a>
+                    @endif
                 @endif
-             @endif
                 {!! $column->label !!}
             </th>
-     @endforeach
+        @endforeach
     </tr>
     </thead>
     <tbody>
     @foreach ($dg->rows as $row)
         <tr{!! $row->buildAttributes() !!}>
             @foreach ($row->cells as $cell)
-            <td{!! $cell->buildAttributes() !!}>{!! $cell->value !!}</td>
+                <td{!! $cell->buildAttributes() !!}>{!! $cell->value !!}</td>
             @endforeach
         </tr>
     @endforeach
@@ -44,7 +43,7 @@
 <div class="btn-toolbar" role="toolbar">
     @if ($dg->havePagination())
         <div class="pull-left">
-        {!! $dg->links() !!}
+            {!! $dg->links() !!}
         </div>
         <div class="pull-right">
             {!! $dg->totalRows() !!}
