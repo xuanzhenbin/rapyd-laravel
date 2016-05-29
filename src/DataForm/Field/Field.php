@@ -14,6 +14,7 @@ abstract class Field extends Widget
     public $multiple = false;
     public $label;
     public $name;
+    public $db_name;
     public $relation;
     public $rel_name;
     public $rel_field;
@@ -165,6 +166,16 @@ abstract class Field extends Widget
         }
 
         return $this;
+    }
+
+    public function required()
+    {
+        return $this->rule('required');
+    }
+
+    public function requiredIf()
+    {
+        return $this->rule('required_if:' . join(',', func_get_args()));
     }
 
     /**
