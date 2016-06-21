@@ -179,8 +179,13 @@ class Widget
      */
     public function attr($attribute, $value = null)
     {
-        if (is_array($attribute)) return $this->attributes($attribute);
-        if ($value) return $this->attributes(array($attribute => $value));
+        if (is_array($attribute)) {
+            return $this->attributes($attribute);
+        }
+        if (!is_null($value)) {
+            return $this->attributes(array($attribute => $value));
+        }
+        return $this;
     }
 
     /**

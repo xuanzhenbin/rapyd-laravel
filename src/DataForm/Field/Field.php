@@ -214,6 +214,16 @@ abstract class Field extends Widget
         return $this;
     }
 
+    public function readonly($condition = true)
+    {
+        return value($condition) ? $this->mode('readonly') : $this;
+    }
+
+    public function editable($condition = true)
+    {
+        return value($condition) ? $this->mode('editable') : $this;
+    }
+
     public function mask($mask)
     {
 
@@ -606,7 +616,7 @@ abstract class Field extends Widget
     }
 
     /**
-     * parse blade view passing current model 
+     * parse blade view passing current model
      * @param $view
      * @return string
      */
@@ -614,7 +624,7 @@ abstract class Field extends Widget
     {
         return $this->parseString($view, true);
     }
-    
+
 
     public function build()
     {
@@ -672,7 +682,7 @@ abstract class Field extends Widget
     {
         $output  = "";
         if ($this->has_wrapper && $this->has_label) {
-            $output .= "<label for=\"{$this->name}\" class=\"{$this->req}\">{$this->label}</label>";            
+            $output .= "<label for=\"{$this->name}\" class=\"{$this->req}\">{$this->label}</label>";
         }
         $output .= $this->output;
         $output  = '<span id="div_'.$this->name.'">'.$output.'</span>';
