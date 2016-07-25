@@ -123,7 +123,7 @@ class DataFilter extends DataForm
                         ){
                             if (
                                 is_a($field->relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo') and
-                                in_array($field->type, array('select', 'radiogroup', 'autocomplete'))
+                                in_array($field->type, array('radiogroup', 'autocomplete'))
                             ){
                                     $deep_where = false;
                             } else {
