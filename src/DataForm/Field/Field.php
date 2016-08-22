@@ -208,20 +208,21 @@ abstract class Field extends Widget
 
     public function mode($mode)
     {
-
         $this->mode = $mode;
-
+        if ($mode === 'readonly') {
+            $this->rule = [];
+        }
         return $this;
     }
 
     public function readonly($condition = true)
     {
-        return value($condition) ? $this->mode('readonly') : $this;
+        return $this->editable(!$condition);
     }
 
     public function editable($condition = true)
     {
-        return value($condition) ? $this->mode('editable') : $this;
+        return $this->mode(value($condition) ? 'editable' : 'readonly');
     }
 
     public function mask($mask)
