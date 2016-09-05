@@ -45,8 +45,5 @@
         <div class="pull-left">
             {!! $dg->links() !!}
         </div>
-        <div class="pull-right">
-            {!! $dg->totalRows() !!}
-        </div>
     @endif
 </div>
