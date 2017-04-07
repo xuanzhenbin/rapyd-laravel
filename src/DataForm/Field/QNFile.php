@@ -19,6 +19,7 @@ class QNFile extends Field
     private $saveTo = null;
     private $fileType = self::TYPE_IMAGE;
     private $fileMode = self::MODE_PRIVATE;
+    private $hasWater = true;
 
     private static $uploaders = []; // 判断当前的顺序
 
@@ -56,6 +57,13 @@ class QNFile extends Field
     public function fileMode($mode = self::MODE_PRIVATE)
     {
         $this->fileMode = $mode;
+
+        return $this;
+    }
+
+    public function withoutWater()
+    {
+        $this->hasWater = false;
 
         return $this;
     }
@@ -171,6 +179,9 @@ HTML;
         // 为当前字段中所有的文件生成链接
         $fileLinks = [];
         $store = config("rapyd.qn-file.{$this->fileType}.store");
+        if (!$this->hasWater && $this->fileType == self::TYPE_IMAGE) {
+            $store->withoutWater();
+        }
         foreach (json_decode($this->value ?: '{}', true) as $name => $value) {
             $value = (isset($value) && is_array($value)) ? $value : [];
             foreach ($value as $key) {
